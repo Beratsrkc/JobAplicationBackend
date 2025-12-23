@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
+  createdAt    DateTime      @default(now())
+  password     String
+  role         Role
+  applications Application[]
+  companies    Company[]
+  profile      Profile?
+}
+
+model Profile {
+  id       Int    @id @default(autoincrement())
+  fullName String
+  title    String
+  location String
+  phone    String?
+  bio      String
+  userId   Int    @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Company {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  ownerId     Int
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  jobs        Job[]
+
+  @@unique([name])
+}
+
+model Job {
+  id           Int           @id @default(autoincrement())
+  title        String
+  description  String
+  location     String
+  jobType      JobType
+  companyId    Int
+  createdAt    DateTime      @default(now())
+  applications Application[]
+  company      Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model Application {
+  id        Int               @id @default(autoincrement())
+  status    ApplicationStatus @default(APPLIED)
+  createdAt DateTime          @default(now())
+  userId    Int
+  jobId     Int
+  job       Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+}
+
+enum Role {
+  CANDIDATE
+  EMPLOYER
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  REMOTE
+  HYBRID
+  INTERNSHIP
+}
+
+enum ApplicationStatus {
+  APPLIED
+  REVIEWING
+  REJECTED
+  ACCEPT
+}
